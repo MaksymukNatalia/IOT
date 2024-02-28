@@ -147,7 +147,17 @@ def read_processed_agent_data(processed_agent_data_id: int):
 
 @app.get("/processed_agent_data/", response_model=list[ProcessedAgentDataInDB])
 def list_processed_agent_data():
-    pass
+    db = SessionLocal()
+    try:
+        all_records = db.query(processed_agent_data).all()
+        return all_records
+    except Exception as e:
+        db.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        db.close()
+
+
 # Get list of data
 
 @app.put("/processed_agent_data/{processed_agent_data_id}", response_model=ProcessedAgentDataInDB)
