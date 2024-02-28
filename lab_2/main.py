@@ -101,11 +101,44 @@ async def send_data_to_subscribers(data):
     for websocket in subscriptions:
         await websocket.send_json(json.dumps(data))
 
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @app.post("/processed_agent_data/")
 async def create_processed_agent_data(data:List[ProcessedAgentData]):
-# Insert data to database
-    pass
+    list_data = []
+
+    for item in data:
+        try:
+            post_data = {
+                "road_state": item.road_state,
+                "x": item.agent_data.accelerometer.x,
+                "y": item.agent_data.accelerometer.y,
+                "z": item.agent_data.accelerometer.z,
+                "latitude": item.agent_data.gps.latitude,
+                "longitude": item.agent_data.gps.longitude,
+                "timestamp": item.agent_data.timestamp
+            }
+
+            list_data.append(post_data)
+            db = SessionLocal()
+
+            insert_to_db = insert(processed_agent_data).values(list_data)
+
+            try:
+                db.execute(insert_to_db)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                print(f"An error occurred: {e}")
+            finally:
+                db.close()
+
+        except Exception as e:
+            print(f"Error processing data: {e}")
+
+    return {"message": "Data processed and inserted into the database successfully"}
+
+
 # Send data to subscribers
 @app.get("/processed_agent_data/{processed_agent_data_id}",response_model=ProcessedAgentDataInDB)
 def read_processed_agent_data(processed_agent_data_id: int):
