@@ -149,7 +149,7 @@ def read_processed_agent_data(processed_agent_data_id: int):
         select_data = select(processed_agent_data).where(processed_agent_data.c.id == processed_agent_data_id)
         single_value = db.execute(select_data).fetchone()
         return single_value
-    except Exception as e:
+    except Exception as e:  
         db.rollback()
         print(f"An error occurred: {e}")
     finally:
@@ -174,11 +174,41 @@ def list_processed_agent_data():
 @app.put("/processed_agent_data/{processed_agent_data_id}", response_model=ProcessedAgentDataInDB)
 def update_processed_agent_data(processed_agent_data_id: int, data: ProcessedAgentData ):
 # Update data
-    pass
+        db = SessionLocal()
+        try:
+            update_data = (update(processed_agent_data)
+            .where(processed_agent_data.c.id == processed_agent_data_id).values({
+                "road_state": data.road_state,
+                "x": data.agent_data.accelerometer.x,
+                "y": data.agent_data.accelerometer.y,
+                "z": data.agent_data.accelerometer.z,
+                "latitude": data.agent_data.gps.latitude,
+                "longitude": data.agent_data.gps.longitude,
+                "timestamp": data.agent_data.timestamp
+            }))
+            db.execute(update_data)
+            db.commit()
+            return {"message": "Data updated successfully"}
+        except Exception as e:
+            db.rollback()
+            print(f"An error occurred: {e}")
+        finally:
+            db.close()
 @app.delete("/processed_agent_data/{processed_agent_data_id}", response_model=ProcessedAgentDataInDB)
 def delete_processed_agent_data(processed_agent_data_id: int):
+    db = SessionLocal()
+    try:
+        delete_data = delete(processed_agent_data).where(processed_agent_data.c.id == processed_agent_data_id)
+        db.execute(delete_data)
+        db.commit()
+        return {"message": "Data deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        db.close()
 # Delete by id
-    pass
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
