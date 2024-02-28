@@ -130,13 +130,12 @@ async def create_processed_agent_data(data:List[ProcessedAgentData]):
                 db.execute(insert_to_db)
                 db.commit()
             except Exception as e:
-                db.rollback()
-                print(f"An error occurred: {e}")
+                raise HTTPException(status_code=500, detail="Server error")
             finally:
                 db.close()
 
         except Exception as e:
-            print(f"Error processing data: {e}")
+            raise HTTPException(status_code=500, detail="Server error")
 
     return {"message": "Data processed and inserted into the database successfully"}
 
@@ -149,9 +148,8 @@ def read_processed_agent_data(processed_agent_data_id: int):
         select_data = select(processed_agent_data).where(processed_agent_data.c.id == processed_agent_data_id)
         single_value = db.execute(select_data).fetchone()
         return single_value
-    except Exception as e:  
-        db.rollback()
-        print(f"An error occurred: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Server error")
     finally:
         db.close()
 # Get data by id
@@ -163,8 +161,7 @@ def list_processed_agent_data():
         all_records = db.query(processed_agent_data).all()
         return all_records
     except Exception as e:
-        db.rollback()
-        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Server error")
     finally:
         db.close()
 
@@ -188,23 +185,29 @@ def update_processed_agent_data(processed_agent_data_id: int, data: ProcessedAge
             }))
             db.execute(update_data)
             db.commit()
-            return {"message": "Data updated successfully"}
+
+            select_data = select(processed_agent_data).where(processed_agent_data.c.id == processed_agent_data_id)
+            single_value = db.execute(select_data).fetchone()
+            return single_value
         except Exception as e:
-            db.rollback()
-            print(f"An error occurred: {e}")
+            raise HTTPException(status_code=500, detail="Server error")
         finally:
             db.close()
 @app.delete("/processed_agent_data/{processed_agent_data_id}", response_model=ProcessedAgentDataInDB)
 def delete_processed_agent_data(processed_agent_data_id: int):
     db = SessionLocal()
     try:
+        get_data = db.execute(
+            select(processed_agent_data).where(processed_agent_data.c.id == processed_agent_data_id)).fetchone()
+
+        if get_data is None:
+            raise HTTPException(status_code=404, detail="processed_agent_data with passed id was not found")
         delete_data = delete(processed_agent_data).where(processed_agent_data.c.id == processed_agent_data_id)
         db.execute(delete_data)
         db.commit()
-        return {"message": "Data deleted successfully"}
+        return get_data
     except Exception as e:
-        db.rollback()
-        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Server error")
     finally:
         db.close()
 # Delete by id
