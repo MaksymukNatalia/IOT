@@ -86,6 +86,8 @@ class ProcessedAgentDataInDB(BaseModel):
     timestamp: datetime
 
 
+
+
 # FastAPI WebSocket endpoint
 @app.websocket("/ws/")
 async def websocket_endpoint(websocket: WebSocket):
@@ -142,7 +144,16 @@ async def create_processed_agent_data(data:List[ProcessedAgentData]):
 # Send data to subscribers
 @app.get("/processed_agent_data/{processed_agent_data_id}",response_model=ProcessedAgentDataInDB)
 def read_processed_agent_data(processed_agent_data_id: int):
-    pass
+    db = SessionLocal()
+    try:
+        select_data = select(processed_agent_data).where(processed_agent_data.c.id == processed_agent_data_id)
+        single_value = db.execute(select_data).fetchone()
+        return single_value
+    except Exception as e:
+        db.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        db.close()
 # Get data by id
 
 @app.get("/processed_agent_data/", response_model=list[ProcessedAgentDataInDB])
