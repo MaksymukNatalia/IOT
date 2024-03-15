@@ -122,21 +122,21 @@ async def create_processed_agent_data(data:List[ProcessedAgentData]):
             }
 
             list_data.append(post_data)
-            db = SessionLocal()
-
-            insert_to_db = insert(processed_agent_data).values(list_data)
-
-            try:
-                db.execute(insert_to_db)
-                db.commit()
-            except Exception as e:
-                raise HTTPException(status_code=500, detail="Server error")
-            finally:
-                db.close()
+            
 
         except Exception as e:
             raise HTTPException(status_code=500, detail="Server error")
+    db = SessionLocal()
 
+    insert_to_db = insert(processed_agent_data).values(list_data)
+
+    try:
+        db.execute(insert_to_db)
+        db.commit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Server error")
+    finally:
+        db.close()
     return {"message": "Data processed and inserted into the database successfully"}
 
 
