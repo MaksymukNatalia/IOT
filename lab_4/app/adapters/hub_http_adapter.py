@@ -38,8 +38,6 @@ class HubHttpAdapter(HubGateway):
                 headers=headers
             )
         if response.status_code == 200:
-                print("Data successfully sent to API.")
-                return True
+            return True
         else:
-                print(f"Error sending data to API: {response.status_code}")
-                return False
+            return False

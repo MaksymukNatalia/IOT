@@ -7,21 +7,12 @@ from app.interfaces.hub_gateway import HubGateway
 
 
 class AgentMQTTAdapter(AgentGateway):
-    def __init__(
-        self,
-        broker_host,
-        broker_port,
-        topic,
-        hub_gateway: HubGateway,
-        batch_size=10,
-    ):
+    def __init__(self, broker_host, broker_port, topic, hub_gateway: HubGateway, batch_size=10,):
         self.batch_size = batch_size
-        # MQTT
         self.broker_host = broker_host
         self.broker_port = broker_port
         self.topic = topic
         self.client = mqtt.Client()
-        # Hub
         self.hub_gateway = hub_gateway
 
     def on_connect(self, client, userdata, flags, rc):
